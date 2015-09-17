@@ -1,14 +1,10 @@
-package uva.se;
+package nl.uva.se.funcpipes;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import uva.se.funcpipes.Buffer;
-import uva.se.funcpipes.Pipeline;
-import uva.se.funcpipes.PipelineBuilder;
 
 public class Program {
 	

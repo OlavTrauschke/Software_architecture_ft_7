@@ -1,4 +1,4 @@
-package uva.se.funcpipes;
+package nl.uva.se.funcpipes;
 
 import java.util.Collection;
 import java.util.function.BiFunction;
