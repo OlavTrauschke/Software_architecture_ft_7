@@ -17,6 +17,6 @@ Functional:
 	  - Buffers, which aggregate into a new type
 
 Imperative:
-	src: /dev/src/pipe_filter
+	src: /dev/src/nl.uva.se.imppipes
 
 For running  a complete test, run the main method in Test in a project. For more test options, consult the documentation of the Test class.
