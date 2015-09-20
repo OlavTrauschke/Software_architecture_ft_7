@@ -1,68 +1,135 @@
 package nl.uva.se.funcpipes;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.function.BiFunction;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class Buffer<T, U, R> implements PipelineBuilder<R> {
-	
-	private final Pipeline<R> _pipe = new Pipeline<R>();
-	private BiFunction<T, U, R> _func;
-	
-	private T _arg1;
-	private U _arg2;
-	
-	public Buffer() {
-		this(null);
+/**
+ * The buffer buffers input up to a specified size, then calls a function
+ * passing it an array of buffered elements. The output of this function is
+ * continued into a pipeline.
+ * 
+ * @author Floris den Heijer
+ *
+ * @param <T>
+ *            buffer input type
+ * @param <R>
+ *            buffer pipeline output type
+ */
+public class Buffer<T, R> implements PipelineBuilder<R>, Feedable<T> {
+
+	public Buffer(int size) {
+		this(size, null);
 	}
-	
-	public Buffer(BiFunction<T, U, R> f) {
-		_func = f;
+
+	public Buffer(int size, Function<Collection<T>, R> func) {
+		if (size <= 0) {
+			throw new RuntimeException("size must be > 0");
+		}
+		this.size = size;
+		this.buffer = new ArrayList<T>(size);
+		this.func = func;
+		this.pipe = new Pipeline<R>();
 	}
-	
-	public void fillFirstArg(T arg) {
-		_arg1 = arg;
+
+	protected final int size;
+	protected final List<T> buffer;
+	protected final Pipeline<R> pipe;
+
+	protected Function<Collection<T>, R> func;
+
+	/**
+	 * @return size of the buffer
+	 */
+	public int getSize() {
+		return size;
 	}
-	public void fillSecondArg(U arg) {
-		_arg2 = arg;
+
+	/**
+	 * @return buffer function
+	 */
+	public Function<Collection<T>, R> getFunc() {
+		return func;
 	}
-	
-	public void setFunc(BiFunction<T, U, R> f) {
-		_func = f;
+
+	/**
+	 * @param new
+	 *            buffer function
+	 */
+	public void setFunc(Function<Collection<T>, R> func) {
+		this.func = func;
 	}
-	
-	public void flush() {
-		// Save and reset
-		final T a1 = _arg1;
-		final U a2 = _arg2;
-		_arg1 = null;
-		_arg2 = null;
-		
-		if (_func != null) {
-			_pipe.feed(_func.apply(a1, a2));
+
+	/**
+	 * @param obj
+	 *            object to be added to the buffer
+	 */
+	public void feed(T obj) {
+		buffer.add(obj);
+
+		if (buffer.size() == size) {
+			flush();
 		}
 	}
 
-	
+	/**
+	 * @param collection
+	 *            collection of objects to be added to the buffer
+	 */
+	public void feed(Collection<T> collection) {
+		for (T t : collection) {
+			feed(t);
+		}
+	}
+
+	/**
+	 * Flushes the buffer and invokes the transformation function on any data
+	 * currently in the buffer.
+	 */
+	public void flush() {
+		List<T> input = new ArrayList<T>(buffer);
+		buffer.clear();
+
+		if (func != null) {
+			pipe.feed(func.apply(input));
+		}
+	}
+
 	// Pipeline redirect.
 	public PipelineBuilder<R> via(Function<R, R> f) {
-		return _pipe.via(f);
+		return pipe.via(f);
 	}
+
+	@Override
 	public PipelineBuilder<R> via(Consumer<R> consumer) {
-		return _pipe.via(consumer);
+		return pipe.via(consumer);
 	}
+
+	@Override
 	public PipelineBuilder<R> filter(Predicate<R> predicate) {
-		return _pipe.filter(predicate);
+		return pipe.filter(predicate);
 	}
+
+	@Override
 	public PipelineBuilder<R> expand(Function<R, Collection<R>> f) {
-		return _pipe.expand(f);
+		return pipe.expand(f);
 	}
-	public <T2> PipelineBuilder<T2> transform(Function<R, T2> f) {
-		return _pipe.transform(f);
+
+	@Override
+	public <U> PipelineBuilder<U> transform(Function<R, U> f) {
+		return pipe.transform(f);
 	}
+
+	@Override
 	public PipelineSplitBuilder<R> split() {
-		return _pipe.split();
+		return pipe.split();
+	}
+
+	@Override
+	public void to(Feedable<R> p) {
+		pipe.to(p);
 	}
 }

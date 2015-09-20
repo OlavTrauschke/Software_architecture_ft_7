@@ -19,40 +19,47 @@ import java.util.function.Predicate;
  * @author Floris den Heijer
  *
  */
-public class Pipeline<T> implements PipelineBuilder<T> {
+public class Pipeline<T> implements PipelineBuilder<T>, Feedable<T> {
 
-	private final List<Stage> _stages = new ArrayList<Stage>();
+	protected final List<Stage> stages = new ArrayList<Stage>();
 
 	/**
 	 * Send an object down the pipeline.
 	 * 
 	 * @param obj
-	 *            Object to be fed.
+	 *            object to be fed
 	 */
 	public void feed(T obj) {
-		run(obj, _stages);
+		run(obj, stages);
 	}
 
 	/**
-	 * Send multiple objects down the pipeline, each element gets
-	 * individually fed.
+	 * Send multiple objects down the pipeline, each element gets individually
+	 * fed.
 	 * 
 	 * @param collection
-	 *            Collection with objects.
+	 *            objects to be fed
 	 */
 	public void feed(Collection<T> collection) {
 		for (T t : collection) {
-			run(t, _stages);
+			run(t, stages);
 		}
 	}
 
-	private void run(T obj, List<Stage> stages) {
-		
+	/**
+	 * Clears the pipeline.
+	 */
+	public void clear() {
+		stages.clear();
+	}
+
+	protected void run(T obj, List<Stage> stages) {
+
 		int n = stages.size();
 		for (int i = 0; i < n; i++) {
-			
+
 			Stage s = stages.get(i);
-			
+
 			// If function, apply and continue.
 			if (s.func != null) {
 				obj = s.func.apply(obj);
@@ -67,17 +74,17 @@ public class Pipeline<T> implements PipelineBuilder<T> {
 			if (s.predicate != null && !s.predicate.test(obj)) {
 				return;
 			}
-			
+
 			// If expander, recurse on sublist and return.
 			if (s.expander != null) {
 				Collection<T> c = s.expander.apply(obj);
 				if (c != null) {
-					List<Stage> rest = stages.subList(i+1, n);
+					List<Stage> rest = stages.subList(i + 1, n);
 					for (T t : c) {
 						run(t, rest);
 					}
 				}
-				
+
 				return;
 			}
 
@@ -87,52 +94,44 @@ public class Pipeline<T> implements PipelineBuilder<T> {
 			}
 		}
 	}
-	
-	/**
-	 * Clears the pipeline.
-	 */
-	public void clear() {
-		_stages.clear();
-	}
-	
-	
+
 	// Builder interface.
 	public PipelineBuilder<T> via(Function<T, T> f) {
-		_stages.add(new Stage().asFunc(f));
+		stages.add(new Stage().asFunc(f));
 		return this;
 	}
 
 	public PipelineBuilder<T> via(Consumer<T> consumer) {
-		_stages.add(new Stage().asConsumer(consumer, false));
+		stages.add(new Stage().asConsumer(consumer, false));
 		return this;
 	}
 
 	public PipelineBuilder<T> filter(Predicate<T> predicate) {
-		_stages.add(new Stage().asPredicate(predicate));
+		stages.add(new Stage().asPredicate(predicate));
 		return this;
 	}
 
-	public <T2> PipelineBuilder<T2> transform(Function<T, T2> f) {
+	public <R> PipelineBuilder<R> transform(Function<T, R> f) {
 		// Create new pipeline and connect.
-		Pipeline<T2> p2 = new Pipeline<T2>();
-		_stages.add(new Stage().asConsumer(t -> p2.feed(f.apply(t)), true));
+		Pipeline<R> p2 = new Pipeline<R>();
+		stages.add(new Stage().asConsumer(t -> p2.feed(f.apply(t)), true));
 
 		return p2;
 	}
-	
+
 	public PipelineBuilder<T> expand(Function<T, Collection<T>> f) {
-		_stages.add(new Stage().asExpander(f));
+		stages.add(new Stage().asExpander(f));
 		return this;
 	}
-	
+
 	public PipelineSplitBuilder<T> split() {
 		final List<Pipeline<T>> splits = new ArrayList<Pipeline<T>>();
-		_stages.add(new Stage().asConsumer(t -> {
+		stages.add(new Stage().asConsumer(t -> {
 			for (Pipeline<T> p : splits) {
 				p.feed(t);
 			}
-		}, true));
-		
+		} , true));
+
 		return new PipelineSplitBuilder<T>() {
 			public PipelineSplitBuilder<T> to(Pipeline<T> p) {
 				splits.add(p);
@@ -147,10 +146,16 @@ public class Pipeline<T> implements PipelineBuilder<T> {
 		};
 	}
 
+	public void to(Feedable<T> p) {
+		stages.add(new Stage().asConsumer(t -> {
+			p.feed(t);
+		} , true));
+	}
+
 	/**
 	 * Internal stage container
 	 */
-	private class Stage {
+	protected class Stage {
 
 		Function<T, T> func = null;
 		Consumer<T> consumer = null;
@@ -158,20 +163,23 @@ public class Pipeline<T> implements PipelineBuilder<T> {
 		Function<T, Collection<T>> expander = null;
 
 		boolean isEnd = false; // ends pipeline execution, safety precaution.
-		
+
 		Stage asFunc(Function<T, T> func) {
 			this.func = func;
 			return this;
 		}
+
 		Stage asExpander(Function<T, Collection<T>> func) {
 			this.expander = func;
 			return this;
 		}
+
 		Stage asConsumer(Consumer<T> consumer, boolean isEnd) {
 			this.consumer = consumer;
 			this.isEnd = isEnd;
 			return this;
 		}
+
 		Stage asPredicate(Predicate<T> predicate) {
 			this.predicate = predicate;
 			return this;
