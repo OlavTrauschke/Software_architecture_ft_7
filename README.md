@@ -19,4 +19,11 @@ Functional:
 Imperative:
 	src: /dev/src/nl.uva.se.imppipes
 
-For running  a complete test, run the main method in Test in a project. For more test options, consult the documentation of the Test class.
+	To run, load the Eclipse project and build.
+	Run Test.main to run some tests. Modify the public constants in this class to run more or less or larger or smaller tests.
+	In the `imperative`,`object-oriënted` pipelin universe, we have:
+	- Filters performing an operation on elements from a Queue
+	- FilterScalers containing a Queue of Objects that should be filtered by one type of Filter and processed further by performing the same operations, which use more identical Filters when necessary.
+	- StartFilters, a special type of Filters, that can be used as start of a chain of FilterScalers
+	- FinalFilterScalers, a special type of FilterScalers, that can be used as end of a chain of FilterScalers to collect the results
+	- FinalFilters to be used in FinalFilterScalers
