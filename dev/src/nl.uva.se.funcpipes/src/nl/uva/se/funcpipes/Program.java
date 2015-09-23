@@ -2,7 +2,6 @@ package nl.uva.se.funcpipes;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -12,7 +11,7 @@ import java.util.stream.IntStream;
 public class Program {
 
 	public static void main(String[] args) {
-		examples();
+		//examples();
 		feedbackLoopExample();
 	}
 
@@ -41,15 +40,16 @@ public class Program {
 		
 		// Feeding 5 into the pipeline gives the expected result: 250.
 		p.feed(5);
+	
 		
 		// Feeding a collection of numbers is also possible, the following
 		// yields 0, 250 and 500.
 		p.feed(Arrays.asList(0, 5, 10));
-		
+				
 		// Operations can only ever be added to a pipeline, i.e. you can't change
 		// or swap two operations. To clear the pipeline, use the clear() function.
 		p.clear();
-
+		
 		
 		
 		// An example involving a filter would be the elimination of uneven numbers
