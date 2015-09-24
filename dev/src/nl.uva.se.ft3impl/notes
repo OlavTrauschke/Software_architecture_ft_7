@@ -1,0 +1,16 @@
+Reflection from implementation:
+
+	FT3's filter cannot really filter as it throws an illegal argument exception when returning null. This defeats the purpose of a filter, as in my opionion it should be a predicate; i.e. you receive some value and determine wheter or not it passes through (and modify it in the process).
+
+	Each pipe has a queue<T> which accepts data, but instead of pushing data, each following filter 'pulls' data in an infinte loop until it encounters 'null'. In essence, each pipe is a semi-thread safe wrapper around a thread-unsafe queue.
+
+	This isn't really workable even in the logging example, unless the 'is for service engineer' filter also sends out a notification, but that wouldn't really be piping and filtering, just fetching from a buffer.
+
+	To simplify the pipeline, several changes were made. In essence, all important interfaces are the same (Filter<In, Out>, Pipe<T>), but their implementation is somewhat different.
+
+		-----------				----------------			-----------
+		| Pipe<A> |		<>		| Filter<A, B> |	<>		| Pipe<B> | / null
+		-----------				----------------			-----------
+										|
+									  null
+
