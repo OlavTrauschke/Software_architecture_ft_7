@@ -27,3 +27,9 @@ Imperative:
 	- StartFilters, a special type of Filters, that can be used as start of a chain of FilterScalers
 	- FinalFilterScalers, a special type of FilterScalers, that can be used as end of a chain of FilterScalers to collect the results
 	- FinalFilters to be used in FinalFilterScalers
+
+Implementation of FT_3:
+	src: /dev/src/nl.uva.se.ft3impl
+		 /dev/src/src.main.java
+
+	Use the root folder as your workspace in Eclipse, then import ft3impl and src.main.java projects and build.
