@@ -1,6 +1,7 @@
 package src.main.java.pipes;
 
-// Could also implement runnable, but this takes care of thread starting/stopping.
+// Based on the original filter interface, but rewritten to include
+// the threadedrunner, 
 public abstract class Filter<T, R> extends Thread {
 	
 	public Filter(Pipe<T> in, Pipe<R> out) {
